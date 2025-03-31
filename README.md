@@ -6,8 +6,8 @@ https://cloudonair.withgoogle.com/events/dev-genai-handson-25q2
 
 **This is not an officially supported Google product**.
 
-`tutorial.md` に詳細が記載されています。
-- See [tutorial.md](tutorial.md) for more details.
+See [tutorial.md](tutorial.md) for more details.
+- [tutorial.md](tutorial.md) に詳細が記載されています。
 
 Run following command to launch a hands-on.
 - 以下のコマンドを実行して、ハンズオンを開始してください。
