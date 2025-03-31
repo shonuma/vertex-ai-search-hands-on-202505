@@ -1,12 +1,16 @@
-# GCP Handson materials for GIG #1
+# 入門！生成 AI を使った検索システム
+
+https://cloudonair.withgoogle.com/events/dev-genai-handson-25q2
 
 [![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.png)](https://ssh.cloud.google.com/cloudshell/open?cloudshell_git_repo=https://github.com/shonuma/vertex-ai-search-hands-on-202505&cloudshell_working_dir=handson&cloudshell_tutorial=tutorial.md)
 
 **This is not an officially supported Google product**.
 
-See [tutorial.md](tutorial.md) for more details.
+`tutorial.md` に詳細が記載されています。
+- See [tutorial.md](tutorial.md) for more details.
 
-Run following command to launch a tutorial.
+Run following command to launch a hands-on.
+- 以下のコマンドを実行して、ハンズオンを開始してください。
 
 ```
 teachme tutorial.md
