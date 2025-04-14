@@ -14,27 +14,127 @@
 
 ```bash
 cd ~/vertex-ai-search-hands-on-202505
-export GOOGLE_CLOUD_PROJECT="{{project-id}}"
+export GOOGLE_CLOUD_PROJECT="<walkthrough-project-id/>"
 ```
 
+以下のコマンドを実行して `<walkthrough-project-id/>` が出力されれば成功です。
+```bash
+echo $GOOGLE_CLOUD_PROJECT
+```
 
 ## 環境変数の設定
 
 環境変数 `GOOGLE_CLOUD_PROJECT` に GCP プロジェクト ID を設定します。
+- 現在の Google Cloud プロジェクト ID は <walkthrough-project-id/> です。
 
 ```bash
-export GOOGLE_CLOUD_PROJECT="{{project-id}}"
+export GOOGLE_CLOUD_PROJECT="<walkthrough-project-id/>"
 ```
 
-### 対象プロダクト
+以下のコマンドを実行して `<walkthrough-project-id/>` が出力されれば成功です。
+```bash
+echo $GOOGLE_CLOUD_PROJECT
+```
 
-以下が今回学ぶ対象のプロタクトの一覧です。
 
-- Google App Engine
+## API の有効化
+Google Cloud では、利用したい機能ごとに API の有効化を行う必要があります。ここでは、以降のハンズオンで利用する機能を事前に有効化しておきます。
+
+今回のハンズオンでは以下のサービスを利用しますので、該当の API を有効化します。
+- Cloud Run
+- Vertex AI
+- Vertex AI Search
+- Cloud Storage
 - Firestore
-- Serverless VPC access
-- Google Cloud Memorystore
-- Operations
+
+以下のコマンドを実行します。
+
+```bash
+gcloud services enable \
+  run.googleapis.com \
+  aiplatform.googleapis.com \
+  storage.googleapis.com \
+  firestore.googleapis.com \
+  discoveryengine.googleapis.com
+```
+
+## 事例 PDF データを設置する Cloud Storage バケットの作成
+
+事例 PDF データを設置するためのオブジェクト ストレージを作成しましょう。
+
+`<walkthrough-project-id/>-search-handson` という名称の `Cloud Storage` バケットを、東京リージョン（`asia-northeast1`）に作成します。
+
+以下のコマンドを実行します。
+
+```bash
+gcloud storage buckets create gs://${GOOGLE_CLOUD_PROJECT}-search-handson --location=asia-northeast1 --project ${GOOGLE_CLOUD_PROJECT}
+```
+
+以下のコマンドを実行して何も表示されなければ作成に成功しています。
+```
+gcloud storage ls gs://${GOOGLE_CLOUD_PROJECT}-search-handson
+```
+
+また、以下の方法でも確認ができます。
+1. 画面上部の検索バーに **Storage** と入力します。
+2. 検索候補から **Cloud Storage** を選択します。
+3. 画面左部のメニューから **バケット** を選択します。
+4. `<walkthrough-project-id/>-search-handson` というバケットが一覧に表示されていることを確認します。
+
+## 事例 PDF データのコピー
+
+作成した Cloud Storage バケットに、事例 PDF データをコピーします。
+
+以下のコマンドを実行します。
+
+```bash
+gcloud storage cp -r gs://dev-genai-handson-25q2-static/pdfs gs://${GOOGLE_CLOUD_PROJECT}-search-handson/
+```
+
+以下のコマンドを実行して、`${GOOGLE_CLOUD_PROJECT}-search-handson/pdfs/` と表示されれば成功です。
+
+```bash
+gcloud storage ls gs://${GOOGLE_CLOUD_PROJECT}-search-handson/
+```
+
+データが 168 件あることは、以下のコマンドで確認できます。
+
+```bash
+gcloud storage ls gs://${GOOGLE_CLOUD_PROJECT}-search-handson/pdfs/*.pdf | wc -l
+```
+
+これでデータの準備ができました。
+
+続いて、検索エンジンを作成していきましょう。
+
+## 検索エンジンの作成
+
+本手順では、先程準備した事例 PDF データを検索するための検索エンジンを作成します。
+検索エンジンを作成するには、**検索対象のデータの作成（ベクトル化）** を行い、ベクトル化したデータを**検索するための機能** を設定します。
+
+上部の検索バーに **AI applications** と入力し、**AI applications** を選択して開きます。
+
+以下の画面が表示された場合、利用に必要な追加の API の有効化を行います。
+[API の有効化](https://storage.googleapis.com/dev-genai-handson-25q2-static/images/enable_api_ai_applications)
+
+## データストアの作成
+まずは、検索対象のデータを作成していきましょう。
+
+1. 画面左部メニューの **アプリ** を選択し、画面上部の **アプリを作成する** を選択します。
+
+
+
+## 検索エンジンの作成
+
+本手順の画面キャプチャは、Qwiklab のページに記載がありますのでそちらも参考にしてください。
+
+1. 上部の検索バーに **AI applications** と入力し、画面を開きます。以下のような画面が表示された場合、利用に必要な追加の API の有効化を行います。
+2. 画面左部メニューの **アプリ** を選択し、画面上部の **アプリを作成する** を選択します。
+3. アプリの種類で、**カスタム検索** の **作成** ボタンをクリックします。
+4. アプリの構成の検索で、**Enterprise エディションの機能、高度な LLM 検索** を有効化します（チェックされていればそのままでOKです）。
+5. アプリ名を `genai-handson-2025` に設定します。
+6. 会社名または組織名には `Google Cloud` と入力します。
+7. アプリのロケーションは `global` のままで **続行** を押します。
 
 ### 下記の内容をハンズオン形式で学習します。
 
