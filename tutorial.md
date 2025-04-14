@@ -1,16 +1,24 @@
-# G.I.G ハンズオン #1
+# 入門！生成 AI を使った検索システム
 
-## Google Cloud Platform（GCP）プロジェクトの選択
+## はじめに
 
-ハンズオンを行う GCP プロジェクトを作成し、 GCP プロジェクトを選択して **Start/開始** をクリックしてください。
+本ハンズオンでは、生成 AI を用いた検索システムを、Vertex AI Search で構築します。チュートリアルに記載された内容を元に進めていきますので、こちらの画面の内容をよく読みながらコマンドの入力や、画面上の操作を進めてください。
 
-**今回のハンズオンは GAE を使って行うため、既存のプロジェクト（特にすでに使っているなど）だと不都合が生じる恐れがありますので新しいプロジェクトを作成してください。**
+ハンズオンの説明は、以下からでも参照できます。
+- https://github.com/shonuma/vertex-ai-search-hands-on-202505
+- Qwiklab の URL (need to update)
 
-<walkthrough-project-setup>
-</walkthrough-project-setup>
+## Cloud Shell が再起動してしまった場合
 
+回線の切断や、長時間の離席により Cloud Shell との接続が切断されてしまう場合があります。切断されてしまった場合、以下のコマンドを再実行することで、必要な環境変数を再設定できます。
 
-## ハンズオンの内容
+## 環境変数の設定
+
+環境変数 `GOOGLE_CLOUD_PROJECT` に GCP プロジェクト ID を設定します。
+
+```bash
+export GOOGLE_CLOUD_PROJECT="{{project-id}}"
+```
 
 ### 対象プロダクト
 
@@ -78,7 +86,7 @@ gcloud コマンドライン インターフェースは、GCP でメインと�
 
 gcloud コマンドでは操作の対象とするプロジェクトの設定が必要です。
 
-### GCP のプロジェクト ID を環境変数に設定
+### Google Cloud のプロジェクト ID を環境変数に設定
 
 環境変数 `GOOGLE_CLOUD_PROJECT` に GCP プロジェクト ID を設定します。
 
@@ -86,7 +94,7 @@ gcloud コマンドでは操作の対象とするプロジェクトの設定が�
 export GOOGLE_CLOUD_PROJECT="{{project-id}}"
 ```
 
-### CLI（gcloud コマンド） から利用する GCP のデフォルトプロジェクトを設定
+### CLI（gcloud コマンド） から利用する Google Cloud のデフォルトプロジェクトを設定
 
 操作対象のプロジェクトを設定します。
 
@@ -94,7 +102,6 @@ export GOOGLE_CLOUD_PROJECT="{{project-id}}"
 gcloud config set project $GOOGLE_CLOUD_PROJECT
 ```
 
-<walkthrough-footnote>CLI（gcloud）を利用する準備が整いました。次にハンズオンで利用する機能を有効化します。</walkthrough-footnote>
 
 
 ## GCP 環境設定 Part1
