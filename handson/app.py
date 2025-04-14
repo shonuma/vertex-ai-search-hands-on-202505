@@ -5,13 +5,13 @@ from google.api_core import exceptions
 import os
 from urllib.parse import quote # URLエンコード用
 
-# --- 環境変数 (変更なし) ---
+# --- 環境変数 ---
 PROJECT_ID = os.environ.get("PROJECT_ID")
 LOCATION = os.environ.get("LOCATION")
 DATA_STORE_ID = os.environ.get("DATA_STORE_ID")
 # ----------------------------------------------------------
 
-# --- Vertex AI Search 設定 (変更なし) ---
+# --- Vertex AI Search 設定 ---
 serving_config = (
     f"projects/{PROJECT_ID}/locations/{LOCATION}/collections/default_collection/"
     f"dataStores/{DATA_STORE_ID}/servingConfigs/default_config"
@@ -28,7 +28,7 @@ except Exception as e:
     )
     print(initialization_error_message)
 
-# --- 検索関数 (変更なし) ---
+# --- 検索関数 ---
 def search_vertex_ai(query: str) -> str:
     """Vertex AI Search を使用して検索を実行し、結果を Markdown 形式で返す関数"""
     global client, initialization_error_message
@@ -142,7 +142,7 @@ with gr.Blocks(css="style.css", title="AI Agent Bootcamp 検索アプリハン�
 
     results_output = gr.Markdown(label="検索結果")
 
-    # --- ボタンのアクション (変更なし) ---
+    # --- ボタンのアクション ---
     submit_button.click(
         fn=search_vertex_ai,
         inputs=query_input,
@@ -154,7 +154,7 @@ with gr.Blocks(css="style.css", title="AI Agent Bootcamp 検索アプリハン�
         outputs=[query_input, results_output]
     )
 
-# --- アプリケーションの起動 (変更なし) ---
+# --- アプリケーションの起動 ---
 if __name__ == "__main__":
     server_port = int(os.environ.get('PORT', 8080))
     print(f"\nGradio アプリをポート {server_port} で起動します...")
