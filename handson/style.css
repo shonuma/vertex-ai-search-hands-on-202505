@@ -1,0 +1,20 @@
+/* Gradioコンテナ全体の設定 */
+.gradio-container {
+    max-width: 960px; /* 最大幅 */
+    margin-left: auto !important; /* 左マージン自動（中央寄せ） */
+    margin-right: auto !important; /* 右マージン自動（中央寄せ） */
+    padding-top: 20px; /* 上部パディング */
+}
+
+/* 検索ボックスのコンテナ要素の幅を100%に設定 */
+#search-input-box {
+    width: 50% !important; /* Gradioのデフォルトスタイルを上書き */
+    box-sizing: border-box; /* paddingなどを含めて幅を計算 */
+}
+
+/* Textbox内のtextarea要素も幅を合わせる */
+#search-input-box textarea {
+     width: 50% !important;
+     box-sizing: border-box;
+}
+
