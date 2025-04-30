@@ -4,11 +4,13 @@ from google.cloud import discoveryengine_v1beta as discoveryengine
 from google.api_core import exceptions
 import os
 from urllib.parse import quote # URLエンコード用
+from google.cloud import firestore
 
 # --- 環境変数 ---
 PROJECT_ID = os.environ.get("PROJECT_ID")
 LOCATION = os.environ.get("LOCATION")
 DATA_STORE_ID = os.environ.get("DATA_STORE_ID")
+FIRESTORE_COLLECTION_NAME = os.environ.get("FIRESTORE_COLLECTION_NAME")
 # ----------------------------------------------------------
 
 # --- Vertex AI Search 設定 ---
@@ -27,6 +29,51 @@ except Exception as e:
         "認証情報 (gcloud auth application-default login) やライブラリが正しく設定されているか確認してください。"
     )
     print(initialization_error_message)
+
+# Firestore クライアントの初期化
+try:
+    db = firestore.Client(project=PROJECT_ID) # プロジェクトIDを明示的に指定
+    print(f"Firestore client initialized successfully for project {PROJECT_ID}.")
+except Exception as e:
+    print(f"Failed to initialize Firestore client: {e}")
+    db = None
+
+# --- Firestore から直近の検索クエリを取得する関数 ---
+default_examples_list_for_dataset = [ # デフォルトの検索例をグローバルで定義
+    ["Gemini を活用した事例"],
+    ["BigQuery の事例"],
+    ["ゲーム業界での生成 AI を活用した事例"]
+]
+
+def update_dataset_examples(limit=3):
+    """
+    Firestore から直近の検索クエリを取得し、gr.Dataset を更新するための情報を返す。
+    取得できない場合やデータがない場合はデフォルトのリストを使用する。
+    """
+    if not db:
+        print("Firestore client not initialized. Returning default examples for Dataset.")
+        return gr.update(samples=default_examples_list_for_dataset)
+
+    recent_queries_for_dataset = []
+    try:
+        query_log_ref = db.collection(FIRESTORE_COLLECTION_NAME)\
+                          .order_by("updatedAt", direction=firestore.Query.DESCENDING)\
+                          .limit(limit)
+        docs = query_log_ref.stream()
+        for doc_snapshot in docs:
+            data = doc_snapshot.to_dict()
+            if "query" in data:
+                recent_queries_for_dataset.append([data["query"]])
+
+        if recent_queries_for_dataset:
+            print(f"Fetched {len(recent_queries_for_dataset)} recent queries from Firestore for Dataset update.")
+            return gr.update(samples=recent_queries_for_dataset)
+        else:
+            print("No recent queries found in Firestore. Returning default examples for Dataset update.")
+            return gr.update(samples=default_examples_list_for_dataset)
+    except Exception as e:
+        print(f"Error fetching recent queries from Firestore for Dataset update: {e}. Returning default examples.")
+        return gr.update(samples=default_examples_list_for_dataset)
 
 # --- 検索関数 ---
 def search_vertex_ai(query: str) -> str:
@@ -93,6 +140,35 @@ def search_vertex_ai(query: str) -> str:
                 output_md += f"**スニペット:** {snippet_md}\n"
             output_md += "\n"
 
+        # --- Firestore に検索クエリをログとして保存または更新 ---
+        if db: # Firestore クライアントが初期化されていれば実行
+            try:
+                # まず、同じクエリが既に存在するか確認
+                query_ref = db.collection(FIRESTORE_COLLECTION_NAME).where("query", "==", query).limit(1)
+                docs = list(query_ref.stream()) # クエリ結果を取得
+
+                if docs: # ドキュメントが存在する場合 (重複クエリ)
+                    doc_snapshot = docs[0] # 最初のドキュメントを取得 (limit(1)なので最大1件)
+                    doc_ref = doc_snapshot.reference
+                    # count をインクリメントし、updatedAt を更新
+                    doc_ref.update({
+                        "count": firestore.Increment(1),
+                        "updatedAt": firestore.SERVER_TIMESTAMP,
+                    })
+                else: # ドキュメントが存在しない場合 (新規クエリ)
+                    doc_ref = db.collection(FIRESTORE_COLLECTION_NAME).document() # 新しいドキュメントIDを自動生成
+                    doc_ref.set({
+                        "query": query,
+                        "createdAt": firestore.SERVER_TIMESTAMP, # 作成日時
+                        "updatedAt": firestore.SERVER_TIMESTAMP, # 更新日時 (作成時も設定)
+                        "count": 1, # 初期カウント
+                    })
+            except Exception as e:
+                print(f"Error logging or updating query in Firestore: {e}")
+                # Firestoreへのロギングエラーは検索処理自体を妨げないようにする
+        else:
+            print("Firestore client not initialized. Skipping query logging.")
+
         return output_md
 
     except exceptions.GoogleAPICallError as e:
@@ -126,14 +202,12 @@ with gr.Blocks(css="style.css", title="AI Agent Bootcamp 検索アプリハン�
         elem_id="search-input-box" # IDはCSSファイル内で使用するため残す
     )
 
-    gr.Examples(
-        examples=[
-            ["Gemini を活用した事例"],
-            ["BigQuery の事例"],
-            ["ゲーム業界での生成 AI を活用した事例"]
-        ],
-        inputs=query_input,
-        label="入力例"
+    dataset_component = gr.Dataset(
+        components=[query_input], # このデータセットの各行がどの入力コンポーネントに対応するか
+        samples=default_examples_list_for_dataset, # 初期表示はデフォルト
+        label="入力例 (クリックで入力)",
+        # type="values", # Gradioのバージョンによっては不要
+        # headers=["検索クエリ例"] # 必要に応じてヘッダーを設定
     )
 
     with gr.Row():
@@ -154,8 +228,27 @@ with gr.Blocks(css="style.css", title="AI Agent Bootcamp 検索アプリハン�
         outputs=[query_input, results_output]
     )
 
+    # Dataset の行が選択されたときの処理
+    def handle_dataset_select(evt: gr.SelectData):
+        if evt.value: # evt.value は選択された行のデータ (例: ["選択されたクエリ"])
+            selected_query = evt.value[0] # 最初の要素（クエリ文字列）を取得
+            return gr.update(value=selected_query)
+        return gr.update() # 何も選択されていない、または値がない場合は更新しない
+
+    dataset_component.select(
+        fn=handle_dataset_select,
+        inputs=None,
+        outputs=query_input # query_input テキストボックスを更新
+    )
+
+    # ページロード時に Examples を更新する
+    demo.load(
+        fn=update_dataset_examples, # Firestoreから取得し、gr.update()を返す関数
+        inputs=None, # この関数への入力はなし
+        outputs=dataset_component # 更新対象のDatasetコンポーネント
+    )
+
 # --- アプリケーションの起動 ---
 if __name__ == "__main__":
     server_port = int(os.environ.get('PORT', 8080))
-    print(f"\nGradio アプリをポート {server_port} で起動します...")
     demo.launch(server_name="0.0.0.0", server_port=server_port)

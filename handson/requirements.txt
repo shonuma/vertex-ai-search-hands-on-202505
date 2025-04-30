@@ -1,3 +1,4 @@
 gradio
 google-cloud-discoveryengine
 google-api-core
+google-cloud-firestore
