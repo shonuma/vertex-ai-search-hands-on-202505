@@ -4,31 +4,33 @@
 
 本ハンズオンでは、生成 AI を用いた検索システムを、Vertex AI Search で構築します。チュートリアルに記載された内容を元に進めていきますので、こちらの画面の内容をよく読みながらコマンドの入力や、画面上の操作を進めてください。
 
-ハンズオンの説明は、以下からでも参照できます。
-- https://github.com/shonuma/vertex-ai-search-hands-on-202505
-- Qwiklab の URL (need to update)
+ハンズオンの説明は [GitHub 上のページ](https://github.com/shonuma/vertex-ai-search-hands-on-202505/blob/main/tutorial.md) のページからでも参照が可能です。
 
-## Cloud Shell が再起動してしまった場合
+設定画面のキャプチャを確認したい場合は[ラボ](https://explore.qwiklabs.com/classrooms/17237/labs/99713)のページからご確認いただけます。 
 
-回線の切断や、長時間の離席により Cloud Shell との接続が切断されてしまう場合があります。切断されてしまった場合、以下のコマンドを実行することで、必要な環境変数を再設定できます。
+準備ができたら、**開始** ボタンを押してください。
 
-```bash
-cd ~/vertex-ai-search-hands-on-202505
-export GOOGLE_CLOUD_PROJECT="<walkthrough-project-id/>"
-```
+## ハンズオン前半
 
-以下のコマンドを実行して `<walkthrough-project-id/>` が出力されれば成功です。
-```bash
-echo $GOOGLE_CLOUD_PROJECT
-```
+ハンズオンの前半では、以下の作業を行っていきます。
+- API の有効化
+- Cloud Storage バケットの作成
+- 検索対象データの取得
+- 検索対象データのベクトル化
+- 検索エンジンアプリの作成
 
-## 環境変数の設定
+準備ができたら、**次へ** ボタンを押してください。
+
+この画面の説明は読み返すことができます。読み返したい場合は **前へ** ボタンを押してください。
+
+## 環境変数の設定 (Cloud Shell が再起動してしまった場合も実施をお願いします)
 
 環境変数 `GOOGLE_CLOUD_PROJECT` に GCP プロジェクト ID を設定します。
 - 現在の Google Cloud プロジェクト ID は <walkthrough-project-id/> です。
 
 ```bash
 export GOOGLE_CLOUD_PROJECT="<walkthrough-project-id/>"
+gcloud config set project $GOOGLE_CLOUD_PROJECT
 ```
 
 以下のコマンドを実行して `<walkthrough-project-id/>` が出力されれば成功です。
@@ -36,6 +38,7 @@ export GOOGLE_CLOUD_PROJECT="<walkthrough-project-id/>"
 echo $GOOGLE_CLOUD_PROJECT
 ```
 
+回線の切断や、長時間の離席により Cloud Shell との接続が切断されてしまう場合があります。本コマンドを再実行することで、必要な環境変数を再設定できます。
 
 ## API の有効化
 Google Cloud では、利用したい機能ごとに API の有効化を行う必要があります。ここでは、以降のハンズオンで利用する機能を事前に有効化しておきます。
@@ -58,6 +61,8 @@ gcloud services enable \
   discoveryengine.googleapis.com
 ```
 
+`Operation ... finished successfully.` と表示されたら成功です。
+
 ## 事例 PDF データを設置する Cloud Storage バケットの作成
 
 事例 PDF データを設置するためのオブジェクト ストレージを作成しましょう。
@@ -71,11 +76,11 @@ gcloud storage buckets create gs://${GOOGLE_CLOUD_PROJECT}-search-handson --loca
 ```
 
 以下のコマンドを実行して何も表示されなければ作成に成功しています。
-```
+```bash
 gcloud storage ls gs://${GOOGLE_CLOUD_PROJECT}-search-handson
 ```
 
-また、以下の方法でも確認ができます。
+上記の方法のほか、以下の方法でも Cloud Storage のバケットが作成されたことを確認できます。
 1. 画面上部の検索バーに **Storage** と入力します。
 2. 検索候補から **Cloud Storage** を選択します。
 3. 画面左部のメニューから **バケット** を選択します。
@@ -91,13 +96,15 @@ gcloud storage ls gs://${GOOGLE_CLOUD_PROJECT}-search-handson
 gcloud storage cp -r gs://dev-genai-handson-25q2-static/pdfs gs://${GOOGLE_CLOUD_PROJECT}-search-handson/
 ```
 
-以下のコマンドを実行して、`${GOOGLE_CLOUD_PROJECT}-search-handson/pdfs/` と表示されれば成功です。
+コマンドが終了したら、コピーが完了しています。
+
+以下のコマンドを実行して、`<walkthrough-project-id/>-search-handson/pdfs/` と表示されればOKです。
 
 ```bash
 gcloud storage ls gs://${GOOGLE_CLOUD_PROJECT}-search-handson/
 ```
 
-データが 168 件あることは、以下のコマンドで確認できます。
+データが 167 件あることは、以下のコマンドで確認できます。
 
 ```bash
 gcloud storage ls gs://${GOOGLE_CLOUD_PROJECT}-search-handson/pdfs/*.pdf | wc -l
@@ -110,31 +117,116 @@ gcloud storage ls gs://${GOOGLE_CLOUD_PROJECT}-search-handson/pdfs/*.pdf | wc -l
 ## 検索エンジンの作成
 
 本手順では、先程準備した事例 PDF データを検索するための検索エンジンを作成します。
+
 検索エンジンを作成するには、**検索対象のデータの作成（ベクトル化）** を行い、ベクトル化したデータを**検索するための機能** を設定します。
 
-上部の検索バーに **AI applications** と入力し、**AI applications** を選択して開きます。
+## AI Applications を開く
 
-以下の画面が表示された場合、利用に必要な追加の API の有効化を行います。
-[API の有効化](https://storage.googleapis.com/dev-genai-handson-25q2-static/images/enable_api_ai_applications)
+上部の検索バーに `AI applications` と入力し、**AI applications** を選択して開きます。
+
+[このような画面](https://storage.googleapis.com/dev-genai-handson-25q2-static/images/enable_api_ai_applications)が表示された場合は、赤枠内のボタンを押して、サービスの利用に必要な API の有効化を実施してください。
 
 ## データストアの作成
-まずは、検索対象のデータを作成していきましょう。
 
-1. 画面左部メニューの **アプリ** を選択し、画面上部の **アプリを作成する** を選択します。
+まずは、検索対象のデータのベクトル化を行っていきましょう。
+本手順の画面キャプチャは、Qwiklab のページに記載がありますのでそちらも参考にしてください。
 
+1. 画面左部メニューの **データストア** を選択し、画面上部の **データストアを作成** を選択します。
+2. データソースを選択する画面が表示されるので、`Cloud Storage` を選択します。
+3. Cloud Storage のデータのインポート設定が表示されます、今回は PDF データを利用するので、`非構造化ドキュメント` を選択します。同期の頻度は `1 回限り` に設定します。
+4. インポートするフォルダまたはファイルを指定します。先ほど作成した Cloud Storage バケット名（`<walkthrough-project-id/>-search-handson`）を指定します。または、**参照** から、バケットの一覧から選択していただいても大丈夫です。
+5. **続行** を押します。
+6. 名称、及びデータのローケーションを設定します。ロケーションは `global` を選択し、データストア名を `genai-handson-2025-gcs` に指定します。
+7. **作成** を押します。
 
+以上で、データストアの作成（ベクトル化）は完了です。
+
+データストアの作成には 数分 〜 10 分程度の時間がかかります。
 
 ## 検索エンジンの作成
 
+続いて、検索エンジンを作成していきます。
 本手順の画面キャプチャは、Qwiklab のページに記載がありますのでそちらも参考にしてください。
 
-1. 上部の検索バーに **AI applications** と入力し、画面を開きます。以下のような画面が表示された場合、利用に必要な追加の API の有効化を行います。
-2. 画面左部メニューの **アプリ** を選択し、画面上部の **アプリを作成する** を選択します。
-3. アプリの種類で、**カスタム検索** の **作成** ボタンをクリックします。
-4. アプリの構成の検索で、**Enterprise エディションの機能、高度な LLM 検索** を有効化します（チェックされていればそのままでOKです）。
-5. アプリ名を `genai-handson-2025` に設定します。
-6. 会社名または組織名には `Google Cloud` と入力します。
-7. アプリのロケーションは `global` のままで **続行** を押します。
+1. 画面左部メニューの **アプリ** を選択し、画面上部の **アプリを作成する** を選択します。
+2. アプリの種類で、**カスタム検索** の **作成** ボタンをクリックします。
+3. アプリの構成の検索で、**Enterprise エディションの機能、高度な LLM 検索** を有効化します（チェックされていればそのままでOKです）。
+4. アプリ名を `genai-handson-2025-app` に設定します。
+5. 会社名または組織名には `Google Cloud` と入力します。
+6. アプリのロケーションは `global` のままで **続行** を押します。
+7. データストアの選択画面が表示されます。先ほどの手順で作成した `genai-handson-2025-gcs` を指定します。
+8. **作成** を押します。
+
+アプリが正常に作成されました、とポップアップが表示されたら成功です。
+
+アプリの作成が完了し動作し始めるには、数分 〜 5 分程度の時間がかかります。
+
+## 検索のプレビュー画面
+
+アプリの **プレビュー** をクリックします。検索ウィンドウが表示されるので、適当な検索ワードを入力して検索を行ってみます。
+
+アプリの準備ができていない場合 `検索プレビューの準備がまだできていません` とエラーが表示されます。しばらく待ってから、再度検索をお試しください。
+
+## ハンズオン前半の完了
+
+前半は以上で終了です。お疲れ様でした！
+
+## ハンズオン後半に入る前に、環境変数の再設定をしておきましょう
+
+環境変数 `GOOGLE_CLOUD_PROJECT` に GCP プロジェクト ID を設定します。
+- 現在の Google Cloud プロジェクト ID は <walkthrough-project-id/> です。
+
+```bash
+export GOOGLE_CLOUD_PROJECT="<walkthrough-project-id/>"
+```
+
+以下のコマンドを実行して `<walkthrough-project-id/>` が出力されれば成功です。
+```bash
+echo $GOOGLE_CLOUD_PROJECT
+```
+
+## ハンズオン後半
+
+ハンズオンの後半では、以下の作業を進めていきます。
+- 検索エンジンのプレビュー確認
+- Cloud Run へのアプリケーションデプロイのための準備
+- Cloud Run へのアプリケーションのデプロイ
+- Cloud Run アプリの動作確認
+- 検索履歴保存機能の追加
+
+## サービスアカウントの作成
+
+Cloud Run 
+
+```bash
+gcloud iam service-accounts create ai-agent-bootcamp-sa --display-name "Service Account for Cloud Run Service"
+```
+
+
+```bash
+for role in roles/artifactregistry.writer roles/datastore.user roles/storage.objectUser roles/storage.legacyBucketReader roles/discoveryengine.user roles/aiplatform.user;
+do
+gcloud iam service-accounts add-iam-policy-binding \
+  ai-agent-bootcamp-sa \
+  --role=${role}
+done;
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### 下記の内容をハンズオン形式で学習します。
 
