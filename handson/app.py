@@ -9,14 +9,14 @@ from google.cloud import firestore
 # --- 環境変数 ---
 PROJECT_ID = os.environ.get("PROJECT_ID")
 LOCATION = os.environ.get("LOCATION")
-DATA_STORE_ID = os.environ.get("DATA_STORE_ID")
+ENGINE_ID = os.environ.get("ENGINE_ID")
 FIRESTORE_COLLECTION_NAME = os.environ.get("FIRESTORE_COLLECTION_NAME")
 # ----------------------------------------------------------
 
 # --- Vertex AI Search 設定 ---
 serving_config = (
     f"projects/{PROJECT_ID}/locations/{LOCATION}/collections/default_collection/"
-    f"dataStores/{DATA_STORE_ID}/servingConfigs/default_config"
+    f"engines/{ENGINE_ID}/servingConfigs/default_serving_config"
 )
 
 client = None
@@ -177,7 +177,7 @@ def search_vertex_ai(query: str) -> str:
         if e.status_code == 403:
             error_message += "権限不足の可能性があります。Vertex AI APIの有効化やサービスアカウントのロールを確認してください。"
         elif e.status_code == 404:
-            error_message += f"データストアが見つからない可能性があります。設定値 ({PROJECT_ID}, {LOCATION}, {DATA_STORE_ID}) を確認してください。"
+            error_message += f"検索エンジンが見つからない可能性があります。設定値 ({PROJECT_ID}, {LOCATION}, {ENGINE_ID}) を確認してください。"
         else:
              error_message += "リクエスト内容や設定を確認してください。"
         return error_message
