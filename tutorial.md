@@ -219,6 +219,19 @@ for role in roles/artifactregistry.writer roles/datastore.user roles/storage.obj
 
 これで、サービスアカウントの準備ができました。
 
+## 検索エンジンの ID を取得
+
+アプリケーションから実行する検索エンジンの ID を取得します。
+
+1. 上部の検索バーに `AI applications` と入力し、**AI applications** を選択して開きます。
+2. 画面左部メニューの **アプリ** を選択します。
+3. 画面右部に表示されているアプリの `genai-handson-2025` の情報の **ID** にかかれている文字列を控えておきます。これが検索エンジンの ID となり、通常は `genai-handson-2025-xxxx_yyyy` のような形式の文字列です。
+4. 以下のコマンドを実行して、検索エンジンのIDを環境変数に設定します。
+
+```bash
+export ENGINE_ID=<検索エンジンのID>
+```
+
 ## Cloud Run へのデプロイ
 
 Cloud Run へのデプロイを実施します。以下のコマンドを実行することで、ソースコードを Cloud Run へデプロイすることができます。
@@ -232,13 +245,20 @@ cd ~/vertex-ai-search-hands-on-202505
 続いて、デプロイコマンドを実行しましょう。
 
 - `source` には、ソースコードのパスを指定します。
+- `set-env-vars` で、アプリの実行に必要な環境変数を設定しています。
 - `--service-account` には、Cloud Run サービス上で API の実行を行うサービスアカウントを指定します。
 - `build-service-account` には、デプロイ作業を実行するサービスアカウントを指定します。
 - `allow-unauthenticated` を指定すると、認証なしにサービスへアクセスすることが可能になります。
 - `region` は、デプロイするリージョンを指定します。
 
 ```bash
-gcloud run deploy ai-agent-bootcamp-2025-service --source handson/ --service-account=ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --build-service-account=projects/${GOOGLE_CLOUD_PROJECT}/serviceAccounts/ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --allow-unauthenticated --region asia-northeast1
+gcloud run deploy --set-env-vars PROJECT_ID=${GOOGLE_CLOUD_PROJECT},LOCATION=global,DATA_STORE_ID=${ENGINE_ID},FIRESTORE_COLLECTION_NAME=vais-queries ai-agent-bootcamp-2025-service --source handson/ --service-account=ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --build-service-account=projects/${GOOGLE_CLOUD_PROJECT}/serviceAccounts/ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --allow-unauthenticated --region asia-northeast1
+```
+
+デプロイ時に Artifact Registry の Repositry を作成するか聞かれますので、 `y` と入力します。
+```
+Deploying from source requires an Artifact Registry Docker repository to store built containers. A repository named [cloud-run-source-deploy] in region [asia-northeast1] will be 
+created.
 ```
 
 デプロイに成功すると以下のようなメッセージが表示されます。`.app` で終わる URL にアクセスして、検索アプリケーションが動作していることを確認しましょう。
@@ -249,9 +269,17 @@ Service URL: <URL>
 
 ## デプロイされたサービスの動作確認
 
-
+テキストエリアに検索クエリを入力して、検索を試してみてください。
+検索結果と、検索結果の要約が表示されていることを確認しましょう。
 
 
 ## 検索履歴機能の実装
 
 本アプリに、検索履歴を保存する機能を追加してみましょう。
+
+## 再デプロイ
+
+
+## ハンズオン後半の完了
+
+ハンズオンは以上で終了です。お疲れ様でした！
