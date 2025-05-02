@@ -252,7 +252,7 @@ cd ~/vertex-ai-search-hands-on-202505
 - `region` は、デプロイするリージョンを指定します。
 
 ```bash
-gcloud run deploy --set-env-vars PROJECT_ID=${GOOGLE_CLOUD_PROJECT},LOCATION=global,DATA_STORE_ID=${ENGINE_ID},FIRESTORE_COLLECTION_NAME=vais-queries ai-agent-bootcamp-2025-service --source handson/ --service-account=ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --build-service-account=projects/${GOOGLE_CLOUD_PROJECT}/serviceAccounts/ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --allow-unauthenticated --region asia-northeast1
+gcloud run deploy --set-env-vars PROJECT_ID=${GOOGLE_CLOUD_PROJECT},LOCATION=global,ENGINE_ID=${ENGINE_ID},FIRESTORE_COLLECTION_NAME=vais-queries ai-agent-bootcamp-2025-service --source handson/ --service-account=ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --build-service-account=projects/${GOOGLE_CLOUD_PROJECT}/serviceAccounts/ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --allow-unauthenticated --region asia-northeast1
 ```
 
 デプロイ時に Artifact Registry の Repositry を作成するか聞かれますので、 `y` と入力します。
