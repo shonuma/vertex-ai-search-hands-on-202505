@@ -1,5 +1,5 @@
-gradio = 5.27.1
-google-cloud-discoveryengine = 0.13.8
-google-cloud-logging = 3.11.3
-google-api-core = 2.24.0
-google-cloud-firestore = 2.20.2
+gradio == 5.27.1
+google-cloud-discoveryengine == 0.13.8
+google-cloud-logging == 3.11.3
+google-api-core == 2.24.0
+google-cloud-firestore == 2.20.2
