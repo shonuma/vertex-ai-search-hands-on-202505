@@ -5,6 +5,8 @@ from google.api_core import exceptions
 import os
 from urllib.parse import quote # URLエンコード用
 from google.cloud import firestore
+from google.cloud import logging as cloud_logging # Cloud Logging ライブラリをインポート
+import sys
 
 # --- 環境変数 ---
 PROJECT_ID = os.environ.get("PROJECT_ID")
@@ -12,6 +14,25 @@ LOCATION = os.environ.get("LOCATION")
 ENGINE_ID = os.environ.get("ENGINE_ID")
 FIRESTORE_COLLECTION_NAME = os.environ.get("FIRESTORE_COLLECTION_NAME")
 # ----------------------------------------------------------
+
+# --- Cloud Logging クライアントの初期化 ---
+logging_client = None
+logger = None
+try:
+    if not PROJECT_ID:
+        # PROJECT_ID が設定されていない場合は、致命的なエラーとしてアプリケーションを終了
+        sys.stderr.write("エラー: 環境変数 PROJECT_ID が設定されていません。アプリケーションを終了します。\n")
+        sys.exit(1)
+    logging_client = cloud_logging.Client(project=PROJECT_ID)
+    # ロガーを取得 (名前は任意、アプリケーション名などが適切)
+    # このロガー名はCloud Loggingコンソールでログエントリをフィルタリングする際に使用できます
+    logger = logging_client.logger("gradio_vertex_ai_search_app")
+    # 初回起動時にINFOログを出力してみる
+    logger.log_text("Cloud Logging client initialized successfully.", severity="INFO")
+except Exception as e:
+    # loggingクライアントの初期化に失敗した場合、標準エラーに出力し、アプリケーションを終了
+    sys.stderr.write(f"Failed to initialize Cloud Logging client: {e}. Application will terminate.\n")
+    sys.exit(1) # アプリケーションを終了
 
 # --- Vertex AI Search 設定 ---
 serving_config = (
@@ -28,30 +49,30 @@ except Exception as e:
         f"エラー: Vertex AI Search クライアントの初期化に失敗しました。\n{e}\n\n"
         "認証情報 (gcloud auth application-default login) やライブラリが正しく設定されているか確認してください。"
     )
-    print(initialization_error_message)
+    logger.log_text(initialization_error_message, severity="CRITICAL") # 重大なエラーとして記録
 
 # Firestore クライアントの初期化
 try:
     db = firestore.Client(project=PROJECT_ID) # プロジェクトIDを明示的に指定
-    print(f"Firestore client initialized successfully for project {PROJECT_ID}.")
+    logger.log_text(f"Firestore client initialized successfully for project {PROJECT_ID}.", severity="INFO")
 except Exception as e:
-    print(f"Failed to initialize Firestore client: {e}")
+    logger.log_text(f"Failed to initialize Firestore client: {e}. Some features might be unavailable.", severity="ERROR")
     db = None
 
-# --- Firestore から直近の検索クエリを取得する関数 ---
 default_examples_list_for_dataset = [ # デフォルトの検索例をグローバルで定義
     ["Gemini を活用した事例"],
     ["BigQuery の事例"],
     ["ゲーム業界での生成 AI を活用した事例"]
 ]
 
+# --- Firestore から直近の検索クエリを取得する関数 ---
 def update_dataset_examples(limit=3):
     """
     Firestore から直近の検索クエリを取得し、gr.Dataset を更新するための情報を返す。
     取得できない場合やデータがない場合はデフォルトのリストを使用する。
     """
     if not db:
-        print("Firestore client not initialized. Returning default examples for Dataset.")
+        logger.log_text("Firestore client not initialized. Returning default examples for Dataset.", severity="WARNING")
         return gr.update(samples=default_examples_list_for_dataset)
 
     recent_queries_for_dataset = []
@@ -66,14 +87,59 @@ def update_dataset_examples(limit=3):
                 recent_queries_for_dataset.append([data["query"]])
 
         if recent_queries_for_dataset:
-            print(f"Fetched {len(recent_queries_for_dataset)} recent queries from Firestore for Dataset update.")
+            logger.log_text(f"Fetched {len(recent_queries_for_dataset)} recent queries from Firestore for Dataset update.", severity="INFO")
             return gr.update(samples=recent_queries_for_dataset)
         else:
-            print("No recent queries found in Firestore. Returning default examples for Dataset update.")
+            logger.log_text("No recent queries found in Firestore. Returning default examples for Dataset update.", severity="INFO")
             return gr.update(samples=default_examples_list_for_dataset)
     except Exception as e:
-        print(f"Error fetching recent queries from Firestore for Dataset update: {e}. Returning default examples.")
+        logger.log_text(f"Error fetching recent queries from Firestore for Dataset update: {e}. Returning default examples.", severity="ERROR")
         return gr.update(samples=default_examples_list_for_dataset)
+
+
+# --- Firestore に検索クエリをログとして保存または更新する関数 ---
+def log_query_to_firestore(query_text: str):
+    """
+    検索クエリをFirestoreにログとして保存または更新する関数。
+
+    Args:
+        query_text: ログに記録する検索クエリ文字列。
+    """
+    if not db:
+        logger.log_text("Firestore client not initialized. Skipping query logging.", severity="WARNING")
+        return
+
+    if not FIRESTORE_COLLECTION_NAME:
+        logger.log_text("FIRESTORE_COLLECTION_NAME is not set. Skipping query logging.", severity="WARNING")
+        return
+
+    try:
+        # まず、同じクエリが既に存在するか確認
+        query_ref = db.collection(FIRESTORE_COLLECTION_NAME).where("query", "==", query_text).limit(1)
+        docs = list(query_ref.stream()) # クエリ結果を取得
+
+        if docs: # ドキュメントが存在する場合 (重複クエリ)
+            doc_snapshot = docs[0] # 最初のドキュメントを取得
+            # count をインクリメントし、updatedAt を更新
+            doc_ref = doc_snapshot.reference
+            doc_ref.update({
+                "count": firestore.Increment(1),
+                "updatedAt": firestore.SERVER_TIMESTAMP,
+            })
+            logger.log_text(f"Updated existing query log for: '{query_text}'", severity="INFO")
+        else: # ドキュメントが存在しない場合 (新規クエリ)
+            doc_ref = db.collection(FIRESTORE_COLLECTION_NAME).document() # 新しいドキュメントIDを自動生成
+            doc_ref.set({
+                "query": query_text,
+                "createdAt": firestore.SERVER_TIMESTAMP, # 作成日時
+                "updatedAt": firestore.SERVER_TIMESTAMP, # 更新日時 (作成時も設定)
+                "count": 1, # 初期カウント
+            })
+            logger.log_text(f"Logged new query: '{query_text}'", severity="INFO")
+    except Exception as e:
+        logger.log_text(f"Error logging or updating query '{query_text}' in Firestore: {e}", severity="ERROR")
+        # Firestoreへのロギングエラーは検索処理自体を妨げないようにする
+
 
 # --- 検索関数 ---
 def search_vertex_ai(query: str) -> str:
@@ -84,6 +150,7 @@ def search_vertex_ai(query: str) -> str:
         return initialization_error_message
 
     if not client:
+        logger.log_text("Vertex AI Search client is not available, though no initialization error was reported.", severity="ERROR")
         return "エラー: Vertex AI Search クライアントが利用できません。アプリケーションを再起動してください。"
 
     if not query:
@@ -115,6 +182,9 @@ def search_vertex_ai(query: str) -> str:
         output_md += "## 検索結果:\n"
         if not response.results:
             output_md += "関連する結果は見つかりませんでした。"
+            logger.log_text(f"No results found for query: '{query}'", severity="INFO")
+            # 結果がない場合でもクエリはログに記録する
+            log_query_to_firestore(query)
             return output_md
 
         for i, result in enumerate(response.results):
@@ -140,39 +210,16 @@ def search_vertex_ai(query: str) -> str:
                 output_md += f"**スニペット:** {snippet_md}\n"
             output_md += "\n"
 
-        # --- Firestore に検索クエリをログとして保存または更新 ---
-        if db: # Firestore クライアントが初期化されていれば実行
-            try:
-                # まず、同じクエリが既に存在するか確認
-                query_ref = db.collection(FIRESTORE_COLLECTION_NAME).where("query", "==", query).limit(1)
-                docs = list(query_ref.stream()) # クエリ結果を取得
+        # Firestore に検索クエリをログとして保存または更新
+        log_query_to_firestore(query)
 
-                if docs: # ドキュメントが存在する場合 (重複クエリ)
-                    doc_snapshot = docs[0] # 最初のドキュメントを取得 (limit(1)なので最大1件)
-                    doc_ref = doc_snapshot.reference
-                    # count をインクリメントし、updatedAt を更新
-                    doc_ref.update({
-                        "count": firestore.Increment(1),
-                        "updatedAt": firestore.SERVER_TIMESTAMP,
-                    })
-                else: # ドキュメントが存在しない場合 (新規クエリ)
-                    doc_ref = db.collection(FIRESTORE_COLLECTION_NAME).document() # 新しいドキュメントIDを自動生成
-                    doc_ref.set({
-                        "query": query,
-                        "createdAt": firestore.SERVER_TIMESTAMP, # 作成日時
-                        "updatedAt": firestore.SERVER_TIMESTAMP, # 更新日時 (作成時も設定)
-                        "count": 1, # 初期カウント
-                    })
-            except Exception as e:
-                print(f"Error logging or updating query in Firestore: {e}")
-                # Firestoreへのロギングエラーは検索処理自体を妨げないようにする
-        else:
-            print("Firestore client not initialized. Skipping query logging.")
-
+        logger.log_text(f"Search successful for query: '{query}'. Results returned.", severity="INFO")
         return output_md
 
     except exceptions.GoogleAPICallError as e:
-        print(f"API Error: {e}")
+        error_message_detail = f"API Error during search for query '{query}': {e}"
+        logger.log_text(error_message_detail, severity="ERROR")
+
         error_message = f"検索中にAPIエラーが発生しました: {e.message}\n"
         if e.status_code == 403:
             error_message += "権限不足の可能性があります。Vertex AI APIの有効化やサービスアカウントのロールを確認してください。"
@@ -182,7 +229,8 @@ def search_vertex_ai(query: str) -> str:
              error_message += "リクエスト内容や設定を確認してください。"
         return error_message
     except Exception as e:
-        print(f"予期せぬエラーが発生しました: {e}")
+        error_message_detail = f"予期せぬエラーが発生しました during search for query '{query}': {e}"
+        logger.log_text(error_message_detail, severity="ERROR")
         return f"予期せぬエラーが発生しました: {e}"
 
 # --- Gradio UI ---
@@ -206,8 +254,6 @@ with gr.Blocks(css="style.css", title="AI Agent Bootcamp 検索アプリハン�
         components=[query_input], # このデータセットの各行がどの入力コンポーネントに対応するか
         samples=default_examples_list_for_dataset, # 初期表示はデフォルト
         label="入力例 (クリックで入力)",
-        # type="values", # Gradioのバージョンによっては不要
-        # headers=["検索クエリ例"] # 必要に応じてヘッダーを設定
     )
 
     with gr.Row():
@@ -244,11 +290,12 @@ with gr.Blocks(css="style.css", title="AI Agent Bootcamp 検索アプリハン�
     # ページロード時に Examples を更新する
     demo.load(
         fn=update_dataset_examples, # Firestoreから取得し、gr.update()を返す関数
-        inputs=None, # この関数への入力はなし
+        inputs=None,
         outputs=dataset_component # 更新対象のDatasetコンポーネント
     )
 
 # --- アプリケーションの起動 ---
 if __name__ == "__main__":
     server_port = int(os.environ.get('PORT', 8080))
+    logger.log_text(f"Application starting on port {server_port}", severity="INFO")
     demo.launch(server_name="0.0.0.0", server_port=server_port)
