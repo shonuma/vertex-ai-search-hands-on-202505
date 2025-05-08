@@ -129,6 +129,20 @@ gcloud storage ls gs://${GOOGLE_CLOUD_PROJECT}-search-handson/pdfs/*.pdf | wc -l
 
 検索エンジンを作成するには、**検索対象のデータの作成（ベクトル化）** を行い、ベクトル化したデータを**検索するための機能** を設定します。
 
+## 必要な権限の付与
+
+ログインしているメールアドレスをコピーして、`USER_ID` という環境変数に設定します。
+
+```bash
+export USER_ID=<ログイン中のユーザーID>
+```
+
+上記を設定した後、以下のコマンドを実行して `Cloud Storage` にアクセスするための権限 (`roles/storage.objectUser`) を付与します。
+
+```bash
+gcloud projects add-iam-policy-binding ${GOOGLE_CLOUD_PROJECT} --member "user:${USER_ID}" --role=roles/storage.objectUser
+```
+
 ## AI Applications を開く
 
 上部の検索バーに `AI applications` と入力し、**AI applications** を選択して開きます。
@@ -138,7 +152,7 @@ gcloud storage ls gs://${GOOGLE_CLOUD_PROJECT}-search-handson/pdfs/*.pdf | wc -l
 ## データストアの作成
 
 まずは、検索対象のデータのベクトル化を行っていきましょう。
-本手順の画面キャプチャは、Qwiklab のページに記載がありますのでそちらも参考にしてください。
+本手順の画面キャプチャは、[Qwiklab のページ](https://explore.qwiklabs.com/classrooms/17237/labs/99713)に記載がありますのでそちらも参考にしてください。
 
 1. 画面左部メニューの **データストア** を選択し、画面上部の **データストアを作成** を選択します。
 2. データソースを選択する画面が表示されるので、`Cloud Storage` を選択します。
@@ -155,7 +169,7 @@ gcloud storage ls gs://${GOOGLE_CLOUD_PROJECT}-search-handson/pdfs/*.pdf | wc -l
 ## 検索エンジンの作成
 
 続いて、検索エンジンを作成していきます。
-本手順の画面キャプチャは、Qwiklab のページに記載がありますのでそちらも参考にしてください。
+本手順の画面キャプチャは、[Qwiklab のページ](https://explore.qwiklabs.com/classrooms/17237/labs/99713)に記載がありますのでそちらも参考にしてください。
 
 1. 画面左部メニューの **アプリ** を選択し、画面上部の **アプリを作成する** を選択します。
 2. アプリの種類で、**カスタム検索** の **作成** ボタンをクリックします。
