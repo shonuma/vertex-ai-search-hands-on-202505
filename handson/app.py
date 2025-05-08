@@ -3,9 +3,9 @@ import gradio as gr
 from google.cloud import discoveryengine_v1beta as discoveryengine
 from google.api_core import exceptions
 import os
-from urllib.parse import quote # URLエンコード用
+from urllib.parse import quote 
 from google.cloud import firestore
-from google.cloud import logging as cloud_logging # Cloud Logging ライブラリをインポート
+from google.cloud import logging as cloud_logging 
 from google.cloud.firestore_v1.base_query import FieldFilter
 
 import sys
@@ -49,17 +49,17 @@ except Exception as e:
         f"エラー: Vertex AI Search クライアントの初期化に失敗しました。\n{e}\n\n"
         "認証情報 (gcloud auth application-default login) やライブラリが正しく設定されているか確認してください。"
     )
-    logger.log_text(initialization_error_message, severity="CRITICAL") # 重大なエラーとして記録
+    logger.log_text(initialization_error_message, severity="CRITICAL") 
 
 # Firestore クライアントの初期化
 try:
-    db = firestore.Client(project=PROJECT_ID) # プロジェクトIDを明示的に指定
+    db = firestore.Client(project=PROJECT_ID) 
     logger.log_text(f"Firestore client initialized successfully for project {PROJECT_ID}.", severity="INFO")
 except Exception as e:
     logger.log_text(f"Failed to initialize Firestore client: {e}. Some features might be unavailable.", severity="ERROR")
     db = None
 
-default_examples_list_for_dataset = [ # デフォルトの検索例をグローバルで定義
+default_examples_list_for_dataset = [ 
     ["Gemini を活用した事例"],
     ["BigQuery の事例"],
     ["ゲーム業界での生成 AI を活用した事例"]
@@ -119,7 +119,7 @@ def log_query_to_firestore(query_text: str):
         return
 
     try:
-        # まず、同じクエリが既に存在するか確認
+        #同じクエリが既に存在するか確認
         query_ref = db.collection(FIRESTORE_COLLECTION_NAME).where(
             filter=FieldFilter("query", "==", query_text)
         ).limit(1)
@@ -145,7 +145,6 @@ def log_query_to_firestore(query_text: str):
             logger.log_text(f"Logged new query: '{query_text}'", severity="INFO")
     except Exception as e:
         logger.log_text(f"Error logging or updating query '{query_text}' in Firestore: {e}", severity="ERROR")
-        # Firestoreへのロギングエラーは検索処理自体を妨げないようにする
 
 
 # --- 検索関数 ---
@@ -261,7 +260,7 @@ with gr.Blocks(css="style.css", title="AI Agent Bootcamp 検索アプリハン�
     )
 
     dataset_component = gr.Dataset(
-        components=[query_input], # このデータセットの各行がどの入力コンポーネントに対応するか
+        components=[query_input], 
         samples=default_examples_list_for_dataset, # 初期表示はデフォルト
         label="入力例 (クリックで入力)",
     )
@@ -295,10 +294,10 @@ with gr.Blocks(css="style.css", title="AI Agent Bootcamp 検索アプリハン�
 
     # Dataset の行が選択されたときの処理
     def handle_dataset_select(evt: gr.SelectData):
-        if evt.value: # evt.value は選択された行のデータ (例: ["選択されたクエリ"])
-            selected_query = evt.value[0] # 最初の要素（クエリ文字列）を取得
+        if evt.value:
+            selected_query = evt.value[0] 
             return gr.update(value=selected_query)
-        return gr.update() # 何も選択されていない、または値がない場合は更新しない
+        return gr.update() 
 
     dataset_component.select(
         fn=handle_dataset_select,
@@ -308,10 +307,10 @@ with gr.Blocks(css="style.css", title="AI Agent Bootcamp 検索アプリハン�
 
     # ページロード時に Examples を更新する
     demo.load(
-        fn=set_dataset_default_examples,  # デフォルトの結果を返す関数
+        fn=set_dataset_default_examples,  
         # fn=update_dataset_examples, # Firestoreから取得し、gr.update()を返す関数
         inputs=None,
-        outputs=dataset_component # 更新対象のDatasetコンポーネント
+        outputs=dataset_component 
     )
 
 # --- アプリケーションの起動 ---
