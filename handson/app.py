@@ -20,22 +20,19 @@ FIRESTORE_COLLECTION_NAME = os.environ.get("FIRESTORE_COLLECTION_NAME", "vais_qu
 # --- Cloud Logging クライアントの初期化 ---
 logging_client = None
 logger = None
-# try:
-if not PROJECT_ID or not ENGINE_ID:
-    # PROJECT_ID が設定されていない場合は、致命的なエラーとしてアプリケーションを終了
-    sys.stderr.write("エラー: 環境変数 PROJECT_ID / ENGINE_ID が設定されていません。アプリケーションを終了します。\n")
-    sys.exit(1)
+try:
+    if not PROJECT_ID or not ENGINE_ID:
+        # PROJECT_ID が設定されていない場合は、致命的なエラーとしてアプリケーションを終了
+        sys.stderr.write("エラー: 環境変数 PROJECT_ID / ENGINE_ID が設定されていません。アプリケーションを終了します。\n")
+        sys.exit(1)
 
-logging_client = cloud_logging.Client(project=PROJECT_ID)
-# ロガーを取得 (名前は任意、アプリケーション名などが適切)
-# このロガー名はCloud Loggingコンソールでログエントリをフィルタリングする際に使用できます
-logger = logging_client.logger("gradio_vertex_ai_search_app")
-# 初回起動時にINFOログを出力してみる
-logger.log_text("Cloud Logging client initialized successfully.", severity="INFO")
-# except Exception as e:
-#     # loggingクライアントの初期化に失敗した場合、標準エラーに出力し、アプリケーションを終了
-#     sys.stderr.write(f"Failed to initialize Cloud Logging client: {e}. Application will terminate.\n")
-#     sys.exit(1) # アプリケーションを終了
+    logging_client = cloud_logging.Client(project=PROJECT_ID)
+    logger = logging_client.logger("gradio_vertex_ai_search_app")
+    logger.log_text("Cloud Logging client initialized successfully.", severity="INFO")
+except Exception as e:
+# loggingクライアントの初期化に失敗した場合、標準エラーに出力し、アプリケーションを終了
+    sys.stderr.write(f"Failed to initialize Cloud Logging client: {e}. Application will terminate.\n")
+    sys.exit(1) # アプリケーションを終了
 
 # --- Vertex AI Search 設定 ---
 serving_config = (
