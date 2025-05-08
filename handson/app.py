@@ -6,33 +6,36 @@ import os
 from urllib.parse import quote # URLエンコード用
 from google.cloud import firestore
 from google.cloud import logging as cloud_logging # Cloud Logging ライブラリをインポート
+from google.cloud.firestore_v1.base_query import FieldFilter
+
 import sys
 
 # --- 環境変数 ---
 PROJECT_ID = os.environ.get("PROJECT_ID")
-LOCATION = os.environ.get("LOCATION")
+LOCATION = os.environ.get("LOCATION", "global")
 ENGINE_ID = os.environ.get("ENGINE_ID")
-FIRESTORE_COLLECTION_NAME = os.environ.get("FIRESTORE_COLLECTION_NAME")
+FIRESTORE_COLLECTION_NAME = os.environ.get("FIRESTORE_COLLECTION_NAME", "vais_queries")
 # ----------------------------------------------------------
 
 # --- Cloud Logging クライアントの初期化 ---
 logging_client = None
 logger = None
-try:
-    if not PROJECT_ID:
-        # PROJECT_ID が設定されていない場合は、致命的なエラーとしてアプリケーションを終了
-        sys.stderr.write("エラー: 環境変数 PROJECT_ID が設定されていません。アプリケーションを終了します。\n")
-        sys.exit(1)
-    logging_client = cloud_logging.Client(project=PROJECT_ID)
-    # ロガーを取得 (名前は任意、アプリケーション名などが適切)
-    # このロガー名はCloud Loggingコンソールでログエントリをフィルタリングする際に使用できます
-    logger = logging_client.logger("gradio_vertex_ai_search_app")
-    # 初回起動時にINFOログを出力してみる
-    logger.log_text("Cloud Logging client initialized successfully.", severity="INFO")
-except Exception as e:
-    # loggingクライアントの初期化に失敗した場合、標準エラーに出力し、アプリケーションを終了
-    sys.stderr.write(f"Failed to initialize Cloud Logging client: {e}. Application will terminate.\n")
-    sys.exit(1) # アプリケーションを終了
+# try:
+if not PROJECT_ID or not ENGINE_ID:
+    # PROJECT_ID が設定されていない場合は、致命的なエラーとしてアプリケーションを終了
+    sys.stderr.write("エラー: 環境変数 PROJECT_ID / ENGINE_ID が設定されていません。アプリケーションを終了します。\n")
+    sys.exit(1)
+
+logging_client = cloud_logging.Client(project=PROJECT_ID)
+# ロガーを取得 (名前は任意、アプリケーション名などが適切)
+# このロガー名はCloud Loggingコンソールでログエントリをフィルタリングする際に使用できます
+logger = logging_client.logger("gradio_vertex_ai_search_app")
+# 初回起動時にINFOログを出力してみる
+logger.log_text("Cloud Logging client initialized successfully.", severity="INFO")
+# except Exception as e:
+#     # loggingクライアントの初期化に失敗した場合、標準エラーに出力し、アプリケーションを終了
+#     sys.stderr.write(f"Failed to initialize Cloud Logging client: {e}. Application will terminate.\n")
+#     sys.exit(1) # アプリケーションを終了
 
 # --- Vertex AI Search 設定 ---
 serving_config = (
@@ -64,6 +67,11 @@ default_examples_list_for_dataset = [ # デフォルトの検索例をグロー�
     ["BigQuery の事例"],
     ["ゲーム業界での生成 AI を活用した事例"]
 ]
+
+# --- デフォルトの検索例を返す関数 ---
+def set_dataset_default_examples(limit=3):
+    return gr.update(samples=default_examples_list_for_dataset)
+
 
 # --- Firestore から直近の検索クエリを取得する関数 ---
 def update_dataset_examples(limit=3):
@@ -115,7 +123,9 @@ def log_query_to_firestore(query_text: str):
 
     try:
         # まず、同じクエリが既に存在するか確認
-        query_ref = db.collection(FIRESTORE_COLLECTION_NAME).where("query", "==", query_text).limit(1)
+        query_ref = db.collection(FIRESTORE_COLLECTION_NAME).where(
+            filter=FieldFilter("query", "==", query_text)
+        ).limit(1)
         docs = list(query_ref.stream()) # クエリ結果を取得
 
         if docs: # ドキュメントが存在する場合 (重複クエリ)
@@ -207,7 +217,7 @@ def search_vertex_ai(query: str) -> str:
 
             if snippet:
                 snippet_md = snippet.replace("<em>", "*").replace("</em>", "*")
-                output_md += f"**スニペット:** {snippet_md}\n"
+                output_md += f"{snippet_md}\n"
             output_md += "\n"
 
         # Firestore に検索クエリをログとして保存または更新
@@ -289,7 +299,8 @@ with gr.Blocks(css="style.css", title="AI Agent Bootcamp 検索アプリハン�
 
     # ページロード時に Examples を更新する
     demo.load(
-        fn=update_dataset_examples, # Firestoreから取得し、gr.update()を返す関数
+        fn=set_dataset_default_examples,  # デフォルトの結果を返す関数
+        # fn=update_dataset_examples, # Firestoreから取得し、gr.update()を返す関数
         inputs=None,
         outputs=dataset_component # 更新対象のDatasetコンポーネント
     )
