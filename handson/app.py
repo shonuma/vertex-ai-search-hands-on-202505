@@ -274,10 +274,19 @@ with gr.Blocks(css="style.css", title="AI Agent Bootcamp 検索アプリハン�
 
     # --- ボタンのアクション ---
     submit_button.click(
+        fn=lambda: gr.update(interactive=False),
+        inputs=None,
+        outputs=submit_button,
+    ).then(
         fn=search_vertex_ai,
         inputs=query_input,
         outputs=results_output
+    ).then(
+        fn=lambda: gr.update(interactive=True),
+        inputs=None,
+        outputs=submit_button,
     )
+
     clear_button.click(
         lambda: ("", ""),
         inputs=None,
