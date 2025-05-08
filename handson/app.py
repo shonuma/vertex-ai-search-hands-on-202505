@@ -174,7 +174,10 @@ def search_vertex_ai(query: str) -> str:
             ),
             summary_spec=discoveryengine.SearchRequest.ContentSearchSpec.SummarySpec(
                 summary_result_count=3,
-                include_citations=True
+                include_citations=True,
+                #model_prompt_spec=discoveryengine.SearchRequest.ContentSearchSpec.SummarySpec.ModelPromptSpec(
+                #    preamble="関西弁で要約してください"
+                #),
             ),
         )
     )
