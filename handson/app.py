@@ -283,6 +283,10 @@ with gr.Blocks(css="style.css", title="AI Agent Bootcamp 検索アプリハン�
         inputs=query_input,
         outputs=results_output
     ).then(
+        fn=set_dataset_default_examples,
+        inputs=None,
+        outputs=dataset_component
+    ).then(
         fn=lambda: gr.update(interactive=True),
         inputs=None,
         outputs=submit_button,
