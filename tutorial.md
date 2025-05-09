@@ -394,7 +394,7 @@ gcloud run deploy --set-env-vars PROJECT_ID=${GOOGLE_CLOUD_PROJECT},LOCATION=glo
 作業ディレクトリに移動します。
 
 ```bash
-cd ~/vertex-ai-search-hands-on-2025
+cd ~/vertex-ai-search-hands-on-202505
 ```
 
 以下のコマンドを実行して、システム指示を入力できるパラメータ `preamble` に指示を入力します。
