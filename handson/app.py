@@ -176,7 +176,7 @@ def search_vertex_ai(query: str) -> str:
                 include_citations=True,
                 model_prompt_spec=discoveryengine.SearchRequest.ContentSearchSpec.SummarySpec.ModelPromptSpec(
                     # set preamble
-                    # - 小学生でもわかりやすい表現で要約してください
+                    # - 小学生でも理解できる表現で説明してください
                     preamble=""
                 ),
             ),
