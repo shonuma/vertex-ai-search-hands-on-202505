@@ -41,7 +41,7 @@ echo $GOOGLE_CLOUD_PROJECT
 ```
  `<walkthrough-project-id/>` が出力されれば成功です。
 
-`gcloud` コマンドのデフォルトプロジェクトの設定
+`gcloud` コマンドのデフォルトプロジェクトも確認しておきます。
 ```bash
 gcloud config list project | grep project
 ```
@@ -132,9 +132,16 @@ gcloud storage ls gs://${GOOGLE_CLOUD_PROJECT}-search-handson/pdfs/*.pdf | wc -l
 ## 必要な権限の付与
 
 ログインしているメールアドレスをコピーして、`USER_ID` という環境変数に設定します。
+[コンソールの右上のアイコンをクリック](https://storage.googleapis.com/dev-genai-handson-25q2-static/images/user_name_1)するか、[ラボの開始画面](https://storage.googleapis.com/dev-genai-handson-25q2-static/images/user_name_2)から確認できます。
+
 
 ```bash
-export USER_ID=<ログイン中のユーザーID>
+export USER_ID=<user id>
+```
+
+以下のコマンドで、ユーザー ID が出力されていれば成功です。
+```bash
+echo $USER_ID
 ```
 
 上記を設定した後、以下のコマンドを実行して `Cloud Storage` にアクセスするための権限 (`roles/storage.objectUser`) を付与します。
@@ -143,16 +150,20 @@ export USER_ID=<ログイン中のユーザーID>
 gcloud projects add-iam-policy-binding ${GOOGLE_CLOUD_PROJECT} --member "user:${USER_ID}" --role=roles/storage.objectUser
 ```
 
+これで、データの準備は完了です。
+
 ## AI Applications を開く
+
+これから、検索エンジンの作成手順に入っていきます。
 
 上部の検索バーに `AI applications` と入力し、**AI applications** を選択して開きます。
 
-[このような画面](https://storage.googleapis.com/dev-genai-handson-25q2-static/images/enable_api_ai_applications)が表示された場合は、赤枠内のボタンを押して、サービスの利用に必要な API の有効化を実施してください。
+[このような画面](https://storage.googleapis.com/dev-genai-handson-25q2-static/images/enable_api_ai_applications)が表示されるので、赤枠内のボタンを押してサービスの利用に必要な API の有効化を実施してください。
 
 ## データストアの作成
 
 まずは、検索対象のデータのベクトル化を行っていきましょう。
-本手順の画面キャプチャは、[Qwiklab のページ](https://explore.qwiklabs.com/classrooms/17237/labs/99713)に記載がありますのでそちらも参考にしてください。
+本手順の画面キャプチャは、ラボのページに記載がありますのでそちらも参考にしてください。
 
 1. 画面左部メニューの **データストア** を選択し、画面上部の **データストアを作成** を選択します。
 2. データソースを選択する画面が表示されるので、`Cloud Storage` を選択します。
@@ -169,7 +180,8 @@ gcloud projects add-iam-policy-binding ${GOOGLE_CLOUD_PROJECT} --member "user:${
 ## 検索エンジンの作成
 
 続いて、検索エンジンを作成していきます。
-本手順の画面キャプチャは、[Qwiklab のページ](https://explore.qwiklabs.com/classrooms/17237/labs/99713)に記載がありますのでそちらも参考にしてください。
+本手順の画面キャプチャは、ラボのページに記載がありますのでそちらも参考にしてください。
+
 
 1. 画面左部メニューの **アプリ** を選択し、画面上部の **アプリを作成する** を選択します。
 2. アプリの種類で、**カスタム検索** の **作成** ボタンをクリックします。
@@ -240,11 +252,11 @@ for role in roles/artifactregistry.writer roles/datastore.user roles/storage.obj
 
 1. 上部の検索バーに `AI applications` と入力し、**AI applications** を選択して開きます。
 2. 画面左部メニューの **アプリ** を選択します。
-3. 画面右部に表示されているアプリの `genai-handson-2025` の情報の **ID** にかかれている文字列を控えておきます。これが検索エンジンの ID となり、通常は `genai-handson-2025-xxxx_yyyy` のような形式の文字列です。
-4. 以下のコマンドを実行して、検索エンジンのIDを環境変数に設定します。
+3. 画面右部に表示されているアプリの `genai-handson-2025` の情報の **ID** にかかれている文字列を控えておきます。これが検索エンジンの ID となり、通常は `genai-handson-2025-app_xxxxxx` のような形式の文字列です。
+4. 以下のコマンドを実行して、検索エンジンのIDを環境変数に設定します。`<search engine id>` には、上記で取得した ID を指定してください。
 
 ```bash
-export ENGINE_ID=<検索エンジンのID>
+export ENGINE_ID=<search engine id>
 ```
 
 ## Cloud Run へのデプロイ
@@ -322,9 +334,7 @@ gcloud firestore databases list | grep '(default)'
 
 ## Firestore データベースへ接続するための変更を実施
 
-続けて、ソースコードを変更します。ご自身でエディタを利用してソースコードの書き換えを行いたい場合は、[ラボ](https://explore.qwiklabs.com/classrooms/17237/labs/99713) のページも参照してください。
-
-作業ディレクトリに移動します。
+続けて、ソースコードを変更します。作業ディレクトリに移動します。
 
 ```bash
 cd ~/vertex-ai-search-hands-on-2025
