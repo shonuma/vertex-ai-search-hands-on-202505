@@ -377,7 +377,11 @@ index 538b8b5..af2a917 100644
 gcloud run deploy --set-env-vars PROJECT_ID=${GOOGLE_CLOUD_PROJECT},LOCATION=global,ENGINE_ID=${ENGINE_ID},FIRESTORE_COLLECTION_NAME=vais-queries ai-agent-bootcamp-2025-service --source handson/ --service-account=ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --build-service-account=projects/${GOOGLE_CLOUD_PROJECT}/serviceAccounts/ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --allow-unauthenticated --region asia-northeast1
 ```
 
-再度動作確認を行い、検索履歴が入力例の部分に表示されていることを確認します。
+動作確認をしてみましょう。適当な文字列で検索を行った後、ブラウザを再読み込みしてみてください。
+
+**入力例** に検索履歴が表示されていることが確認できれば OK です。
+
+[検索履歴の表示例](https://storage.googleapis.com/dev-genai-handson-25q2-static/images/query_history)
 
 ## 要約のカスタマイズ
 
@@ -394,6 +398,7 @@ cd ~/vertex-ai-search-hands-on-2025
 ```
 
 以下のコマンドを実行して、システム指示を入力できるパラメータ `preamble` に指示を入力します。
+※ 本コマンドはマルチバイト文字列を含むため、クリップボードにコピーしてからの貼り付けをお願いします。
 
 ```bash
 sed -ie 's/preamble=\".*\"/preamble="小学生でも理解できる表現で説明してください"/' handson/app.py
@@ -414,16 +419,28 @@ gcloud run deploy --set-env-vars PROJECT_ID=${GOOGLE_CLOUD_PROJECT},LOCATION=glo
 時間があれば、他の指示も試してみましょう。
 以下のコマンドを実行すると、関西弁風に説明を行ってくれるようになります。
 
-`関西弁で説明してください` を他の命令に変更することで、自由に要約指示を行うことができます。
+以下のは、システム指示を関西弁風にする例です。
+※ 本コマンドはマルチバイト文字列を含むため、クリップボードにコピーしてからの貼り付けをお願いします。
 
 ```bash
 export PREAMBLE="関西弁で説明してください"
+```
+
+そのほか、以下のような指示も試してみましょう。
+- 100 文字程度で説明してください
+- 男性と女性の会話形式で説明してください
+
+環境変数を設定したら、以下のコマンドを実行します。
+
+```bash
 sed -ie 's/preamble=\".*\"/preamble="${PREAMBLE}"/' handson/app.py
 ```
 
-例えば以下のような指示を試してみましょう。
-- 100 文字程度で説明してください
-- 男性と女性の会話形式で説明してください
+デプロイを行い、動作確認を行ってみましょう。システム指示の表現が変化していることを確認できれば OK です。
+
+```bash
+gcloud run deploy --set-env-vars PROJECT_ID=${GOOGLE_CLOUD_PROJECT},LOCATION=global,ENGINE_ID=${ENGINE_ID},FIRESTORE_COLLECTION_NAME=vais-queries ai-agent-bootcamp-2025-service --source handson/ --service-account=ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --build-service-account=projects/${GOOGLE_CLOUD_PROJECT}/serviceAccounts/ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --allow-unauthenticated --region asia-northeast1
+```
 
 ## ハンズオンの完了
 
