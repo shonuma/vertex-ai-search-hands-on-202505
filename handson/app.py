@@ -174,9 +174,11 @@ def search_vertex_ai(query: str) -> str:
             summary_spec=discoveryengine.SearchRequest.ContentSearchSpec.SummarySpec(
                 summary_result_count=3,
                 include_citations=True,
-                #model_prompt_spec=discoveryengine.SearchRequest.ContentSearchSpec.SummarySpec.ModelPromptSpec(
-                #    preamble="関西弁で要約してください"
-                #),
+                model_prompt_spec=discoveryengine.SearchRequest.ContentSearchSpec.SummarySpec.ModelPromptSpec(
+                    # set preamble
+                    # - 小学生でもわかりやすい表現で要約してください
+                    preamble=""
+                ),
             ),
         )
     )
@@ -307,8 +309,9 @@ with gr.Blocks(css="style.css", title="AI Agent Bootcamp 検索アプリハン�
 
     # ページロード時に Examples を更新する
     demo.load(
-        fn=set_dataset_default_examples,  
-        # fn=update_dataset_examples, # Firestoreから取得し、gr.update()を返す関数
+        # set_dataset_default_examples: default
+        # update_dataset_examples: get/set from firestoer
+        fn=set_dataset_default_examples,
         inputs=None,
         outputs=dataset_component 
     )

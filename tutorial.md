@@ -214,6 +214,7 @@ gcloud config set project $GOOGLE_CLOUD_PROJECT
 - Cloud Run へのアプリケーションのデプロイ
 - Cloud Run アプリの動作確認
 - 検索履歴保存機能の追加
+- 要約のカスタマイズ
 
 ## Cloud Run デプロイ用のサービスアカウントの作成
 
@@ -294,7 +295,7 @@ Service URL: <URL>
 
 ## Firestore データベースの作成
 
-Firestore のデータベースを作成します。以下のコマンドを実行します。
+まずは、検索履歴を保持するための Firestore データベースを作成します。以下のコマンドを実行します。
 
 ```bash
 gcloud firestore databases create \
@@ -311,6 +312,15 @@ gcloud firestore databases list | grep '(default)'
 
 ## Firestore データベースへの接続
 
+続けて、ソースコードを変更します。スクリーンショット付きの手順を確認したい場合は、[ラボ](https://explore.qwiklabs.com/classrooms/17237/labs/99713) のページも参照してください。
+
+Cloud Shell には統合エディタ機能が搭載されています。Cloud Shell メニュー上部の **エディタを開く** をクリックします。エディタが開くまで、少し時間がかかります。
+
+エディタが開いたら、画面左部メニューの **vertex-ai-search-hands-on-202505** をクリックし、**handson** ディレクトリ以下にある **app.py** をクリックします。
+
+画面右部のエディタにソースコードが表示されます。
+
+## 
 
 
 ```python
