@@ -261,7 +261,7 @@ cd ~/vertex-ai-search-hands-on-202505
 
 - `source` には、ソースコードのパスを指定します。
 - `set-env-vars` で、アプリの実行に必要な環境変数を設定しています。
-- `--service-account` には、Cloud Run サービス上で API の実行を行うサービスアカウントを指定します。
+- `service-account` には、Cloud Run サービス上で API の実行を行うサービスアカウントを指定します。
 - `build-service-account` には、デプロイ作業を実行するサービスアカウントを指定します。
 - `allow-unauthenticated` を指定すると、認証なしにサービスへアクセスすることが可能になります。
 - `region` は、デプロイするリージョンを指定します。
@@ -271,12 +271,16 @@ gcloud run deploy --set-env-vars PROJECT_ID=${GOOGLE_CLOUD_PROJECT},LOCATION=glo
 ```
 
 デプロイ時に Artifact Registry の Repositry を作成するか聞かれますので、 `y` と入力します。
+
+※ 出力例のため実行不要です
 ```
 Deploying from source requires an Artifact Registry Docker repository to store built containers. A repository named [cloud-run-source-deploy] in region [asia-northeast1] will be 
 created.
 ```
 
 デプロイに成功すると以下のようなメッセージが表示されます。`.app` で終わる URL にアクセスして、検索アプリケーションが動作していることを確認しましょう。
+
+※ 出力例のため実行不要です
 ```
 Service [ai-agent-bootcamp-2025-service] revision [...] has been deployed and is serving 100 percent of traffic.
 Service URL: <URL>
@@ -286,6 +290,12 @@ Service URL: <URL>
 
 テキストエリアに検索クエリを入力して、検索を試してみてください。
 検索結果と、検索結果の要約が表示されていることを確認しましょう。
+
+[トップページの表示例](https://storage.googleapis.com/dev-genai-handson-25q2-static/images/app_top_page)
+
+[検索ボタンを押したときの動作例](https://storage.googleapis.com/dev-genai-handson-25q2-static/images/app_search_result)
+
+以上でデプロイは完了です。
 
 ## 検索履歴機能の実装
 
@@ -304,13 +314,13 @@ gcloud firestore databases create \
 --type=firestore-native \
 ```
 
-以下のコマンドを実行し、 `name: projects/<walkthrough-project-id/>/databases/(default)` と表示されれば作成に成功しています。
+以下のコマンドを実行し、 `name: projects/<walkthrough-project-id/>/databases/(default)` と表示されることを確認しましょう。
 
 ```bash
 gcloud firestore databases list | grep '(default)'
 ```
 
-## Firestore データベースへの接続
+## Firestore データベースへ接続するための変更を実施
 
 続けて、ソースコードを変更します。ご自身でエディタを利用してソースコードの書き換えを行いたい場合は、[ラボ](https://explore.qwiklabs.com/classrooms/17237/labs/99713) のページも参照してください。
 
@@ -332,7 +342,9 @@ sed -i 's/fn=set_dataset_default_examples/fn=update_dataset_examples/' handson/a
 git diff
 ```
 
-以下のように、差分が表示されていたら成功です。
+以下のように、差分が表示されたら成功です。
+
+※ 出力例のため実行不要です
 ```bash
 diff --git a/handson/app.py b/handson/app.py
 index 538b8b5..af2a917 100644
@@ -349,20 +361,62 @@ index 538b8b5..af2a917 100644
      )
 ```
 
+## デプロイと動作確認
+
 上記が完了したら、再デプロイを行ってみましょう。
 
 ```bash
 gcloud run deploy --set-env-vars PROJECT_ID=${GOOGLE_CLOUD_PROJECT},LOCATION=global,ENGINE_ID=${ENGINE_ID},FIRESTORE_COLLECTION_NAME=vais-queries ai-agent-bootcamp-2025-service --source handson/ --service-account=ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --build-service-account=projects/${GOOGLE_CLOUD_PROJECT}/serviceAccounts/ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --allow-unauthenticated --region asia-northeast1
 ```
 
-再度動作確認を行い、
+再度動作確認を行い、検索履歴が入力例の部分に表示されていることを確認します。
 
-## 
+## 要約のカスタマイズ
 
+最後に、生成 AI で作成している検索結果の要約をカスタマイズしてみましょう。
 
-## 再デプロイ
+検索エンジンの API のパラメータにシステム指示を入力するように変更していきます。
 
+## 要約のカスタマイズを行うための変更を実施
 
-## ハンズオン後半の完了
+作業ディレクトリに移動します。
+
+```bash
+cd ~/vertex-ai-search-hands-on-2025
+```
+
+以下のコマンドを実行して、システム指示を入力できるパラメータ `preamble` に指示を入力します。
+
+```bash
+sed -ie 's/preamble=\".*\"/preamble="小学生でも理解できる表現で説明してください"/' handson/app.py
+```
+
+## デプロイと動作確認
+
+上記が完了したら、再デプロイを行ってみましょう。
+
+```bash
+gcloud run deploy --set-env-vars PROJECT_ID=${GOOGLE_CLOUD_PROJECT},LOCATION=global,ENGINE_ID=${ENGINE_ID},FIRESTORE_COLLECTION_NAME=vais-queries ai-agent-bootcamp-2025-service --source handson/ --service-account=ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --build-service-account=projects/${GOOGLE_CLOUD_PROJECT}/serviceAccounts/ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --allow-unauthenticated --region asia-northeast1
+```
+
+デプロイが完了したら、システム指示が反映させているかを確認します。
+
+## 他のシステム指示も試してみる
+
+時間があれば、他の指示も試してみましょう。
+以下のコマンドを実行すると、関西弁風に説明を行ってくれるようになります。
+
+`関西弁で説明してください` を他の命令に変更することで、自由に要約指示を行うことができます。
+
+```bash
+export PREAMBLE="関西弁で説明してください"
+sed -ie 's/preamble=\".*\"/preamble="${PREAMBLE}"/' handson/app.py
+```
+
+例えば以下のような指示を試してみましょう。
+- 100 文字程度で説明してください
+- 男性と女性の会話形式で説明してください
+
+## ハンズオンの完了
 
 ハンズオンは以上で終了です。お疲れ様でした！
