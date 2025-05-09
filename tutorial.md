@@ -312,26 +312,52 @@ gcloud firestore databases list | grep '(default)'
 
 ## Firestore データベースへの接続
 
-続けて、ソースコードを変更します。スクリーンショット付きの手順を確認したい場合は、[ラボ](https://explore.qwiklabs.com/classrooms/17237/labs/99713) のページも参照してください。
+続けて、ソースコードを変更します。ご自身でエディタを利用してソースコードの書き換えを行いたい場合は、[ラボ](https://explore.qwiklabs.com/classrooms/17237/labs/99713) のページも参照してください。
 
-Cloud Shell には統合エディタ機能が搭載されています。Cloud Shell メニュー上部の **エディタを開く** をクリックします。エディタが開くまで、少し時間がかかります。
+作業ディレクトリに移動します。
 
-エディタが開いたら、画面左部メニューの **vertex-ai-search-hands-on-202505** をクリックし、**handson** ディレクトリ以下にある **app.py** をクリックします。
+```bash
+cd ~/vertex-ai-search-hands-on-2025
+```
 
-画面右部のエディタにソースコードが表示されます。
+以下のコマンドを実行して、デフォルトの検索候補を返す関数 `set_dataset_default_examples` を `update_dataset_examples` に置き換えます。
+
+```bash
+sed -i 's/fn=set_dataset_default_examples/fn=update_dataset_examples/' handson/app.py
+```
+
+ソースコードの変更がうまくできたかどうかは、以下のコマンドで確認可能です。
+
+```bash
+git diff
+```
+
+以下のように、差分が表示されていたら成功です。
+```bash
+diff --git a/handson/app.py b/handson/app.py
+index 538b8b5..af2a917 100644
+--- a/handson/app.py
++++ b/handson/app.py
+@@ -311,7 +311,7 @@ with gr.Blocks(css="style.css", title="AI Agent Bootcamp 検索アプリハン
+     demo.load(
+         # set_dataset_default_examples: default
+         # update_dataset_examples: get/set from firestoer
+-        fn=set_dataset_default_examples,
++        fn=update_dataset_examples,
+         inputs=None,
+         outputs=dataset_component 
+     )
+```
+
+上記が完了したら、再デプロイを行ってみましょう。
+
+```bash
+gcloud run deploy --set-env-vars PROJECT_ID=${GOOGLE_CLOUD_PROJECT},LOCATION=global,ENGINE_ID=${ENGINE_ID},FIRESTORE_COLLECTION_NAME=vais-queries ai-agent-bootcamp-2025-service --source handson/ --service-account=ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --build-service-account=projects/${GOOGLE_CLOUD_PROJECT}/serviceAccounts/ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --allow-unauthenticated --region asia-northeast1
+```
+
+再度動作確認を行い、
 
 ## 
-
-
-```python
-    # ページロード時に Examples を更新する
-    demo.load(
-        fn=set_dataset_default_examples,  # デフォルトの結果を返す関数
-        # fn=update_dataset_examples, # Firestoreから取得し、gr.update()を返す関数
-        inputs=None,
-        outputs=dataset_component # 更新対象のDatasetコンポーネント
-    )
-```
 
 
 ## 再デプロイ
