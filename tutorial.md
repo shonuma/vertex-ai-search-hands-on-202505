@@ -442,6 +442,10 @@ sed -ie 's/preamble=\".*\"/preamble="${PREAMBLE}"/' handson/app.py
 gcloud run deploy --set-env-vars PROJECT_ID=${GOOGLE_CLOUD_PROJECT},LOCATION=global,ENGINE_ID=${ENGINE_ID},FIRESTORE_COLLECTION_NAME=vais-queries ai-agent-bootcamp-2025-service --source handson/ --service-account=ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --build-service-account=projects/${GOOGLE_CLOUD_PROJECT}/serviceAccounts/ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --allow-unauthenticated --region asia-northeast1
 ```
 
-## ハンズオンの完了
+## Congratulations! (ハンズオンの完了)
 
 ハンズオンは以上で終了です。お疲れ様でした！
+
+画面右上部の **✕ボタン** を押して、チュートリアルを閉じることができます。
+
+本環境は Google Cloud で用意された環境のため、シークレットウィンドウをそのまま閉じていただいて OK です。タイマー終了時までは、本環境を自由にお触りいただけます。
