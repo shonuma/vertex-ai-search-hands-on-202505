@@ -241,7 +241,7 @@ gcloud iam service-accounts create ai-agent-bootcamp-2025-sa --display-name "Ser
 続いて、必要な権限を付与していきます。
 
 ```bash
-for role in roles/artifactregistry.writer roles/datastore.user roles/storage.objectUser roles/discoveryengine.user roles/aiplatform.user roles/run.admin;do gcloud projects add-iam-policy-binding ${GOOGLE_CLOUD_PROJECT} --member='serviceAccount:ai-agent-bootcamp-2025-sa@<walkthrough-project-id/>.iam.gserviceaccount.com' --role=${role}; done;
+for role in roles/artifactregistry.writer roles/datastore.user roles/storage.objectUser roles/discoveryengine.user roles/aiplatform.user roles/run.admin roles/logging.logWriter;do gcloud projects add-iam-policy-binding ${GOOGLE_CLOUD_PROJECT} --member='serviceAccount:ai-agent-bootcamp-2025-sa@<walkthrough-project-id/>.iam.gserviceaccount.com' --role=${role}; done;
 ```
 
 これで、サービスアカウントの準備ができました。
@@ -284,16 +284,17 @@ gcloud run deploy --set-env-vars PROJECT_ID=${GOOGLE_CLOUD_PROJECT},LOCATION=glo
 
 デプロイ時に Artifact Registry の Repositry を作成するか聞かれますので、 `y` と入力します。
 
-※ 出力例のため実行不要です
+
 ```
+# 出力例のため実行不要
 Deploying from source requires an Artifact Registry Docker repository to store built containers. A repository named [cloud-run-source-deploy] in region [asia-northeast1] will be 
 created.
 ```
 
 デプロイに成功すると以下のようなメッセージが表示されます。`.app` で終わる URL にアクセスして、検索アプリケーションが動作していることを確認しましょう。
 
-※ 出力例のため実行不要です
 ```
+# 出力例のため実行不要
 Service [ai-agent-bootcamp-2025-service] revision [...] has been deployed and is serving 100 percent of traffic.
 Service URL: <URL>
 ```
@@ -320,10 +321,7 @@ Service URL: <URL>
 まずは、検索履歴を保持するための Firestore データベースを作成します。以下のコマンドを実行します。
 
 ```bash
-gcloud firestore databases create \
---database="(default)" \
---location="asia-northeast1" \
---type=firestore-native \
+gcloud firestore databases create --database="(default)" --location="asia-northeast1" --type=firestore-native
 ```
 
 以下のコマンドを実行し、 `name: projects/<walkthrough-project-id/>/databases/(default)` と表示されることを確認しましょう。
@@ -337,7 +335,7 @@ gcloud firestore databases list | grep '(default)'
 続けて、ソースコードを変更します。作業ディレクトリに移動します。
 
 ```bash
-cd ~/vertex-ai-search-hands-on-2025
+cd ~/vertex-ai-search-hands-on-202505
 ```
 
 以下のコマンドを実行して、デフォルトの検索候補を返す関数 `set_dataset_default_examples` を `update_dataset_examples` に置き換えます。
@@ -354,8 +352,8 @@ git diff
 
 以下のように、差分が表示されたら成功です。
 
-※ 出力例のため実行不要です
-```bash
+```diff
+# 出力例のため実行不要です
 diff --git a/handson/app.py b/handson/app.py
 index 538b8b5..af2a917 100644
 --- a/handson/app.py
