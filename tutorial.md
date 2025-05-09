@@ -286,10 +286,43 @@ Service URL: <URL>
 テキストエリアに検索クエリを入力して、検索を試してみてください。
 検索結果と、検索結果の要約が表示されていることを確認しましょう。
 
-
 ## 検索履歴機能の実装
 
 本アプリに、検索履歴を保存する機能を追加してみましょう。
+
+検索機能の保持には、ドキュメント 指向 データベースである `Firestore` を利用します。
+
+## Firestore データベースの作成
+
+Firestore のデータベースを作成します。以下のコマンドを実行します。
+
+```bash
+gcloud firestore databases create \
+--database="(default)" \
+--location="asia-northeast1" \
+--type=firestore-native \
+```
+
+以下のコマンドを実行し、 `name: projects/<walkthrough-project-id/>/databases/(default)` と表示されれば作成に成功しています。
+
+```bash
+gcloud firestore databases list | grep '(default)'
+```
+
+## Firestore データベースへの接続
+
+
+
+```python
+    # ページロード時に Examples を更新する
+    demo.load(
+        fn=set_dataset_default_examples,  # デフォルトの結果を返す関数
+        # fn=update_dataset_examples, # Firestoreから取得し、gr.update()を返す関数
+        inputs=None,
+        outputs=dataset_component # 更新対象のDatasetコンポーネント
+    )
+```
+
 
 ## 再デプロイ
 
