@@ -442,6 +442,31 @@ sed -ie 's/preamble=\".*\"/preamble="${PREAMBLE}"/' handson/app.py
 gcloud run deploy --set-env-vars PROJECT_ID=${GOOGLE_CLOUD_PROJECT},LOCATION=global,ENGINE_ID=${ENGINE_ID},FIRESTORE_COLLECTION_NAME=vais-queries ai-agent-bootcamp-2025-service --source handson/ --service-account=ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --build-service-account=projects/${GOOGLE_CLOUD_PROJECT}/serviceAccounts/ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --allow-unauthenticated --region asia-northeast1
 ```
 
+## ログを確認してみる
+
+本システムでは、検索実行時にログを `Cloud Logging` というログ集積サービスに出力しています。そのログを確認してみましょう。
+
+1. 画面上部の検索バーに **Logging** と入力します。
+2. ログエクスプローラに以下の情報を入力し、**クエリを実行**を押します。
+
+```bash
+severity=INFO
+logName=projects/<walkthrough-project-id/>/logs/gradio_vertex_ai_search_app
+```
+
+3. 以下のような検索クエリが含まれるログが表示されていることを確認します。
+
+```bash
+# 出力例のため実行不要です
+Logged new query: 'ゲームの事例'
+Search successful for query: 'ゲームの事例'. Results returned.
+Fetched 3 recent queries from Firestore for Dataset update.
+```
+
+[結果表示例](https://storage.googleapis.com/dev-genai-handson-25q2-static/images/cloud_logging_query)
+
+以上で、ログの出力が確認できました。
+
 ## Congratulations! (ハンズオンの完了)
 
 ハンズオンは以上で終了です。お疲れ様でした！
