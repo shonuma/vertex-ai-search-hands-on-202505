@@ -150,7 +150,7 @@ echo $USER_ID
 gcloud projects add-iam-policy-binding ${GOOGLE_CLOUD_PROJECT} --member "user:${USER_ID}" --role=roles/storage.objectUser
 ```
 
-これで、データの準備は完了です。
+これで、検索エンジン作成に必要な権限の付与は完了です。
 
 ## AI Applications を開く
 
@@ -377,7 +377,9 @@ index 538b8b5..af2a917 100644
 gcloud run deploy --set-env-vars PROJECT_ID=${GOOGLE_CLOUD_PROJECT},LOCATION=global,ENGINE_ID=${ENGINE_ID},FIRESTORE_COLLECTION_NAME=vais-queries ai-agent-bootcamp-2025-service --source handson/ --service-account=ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --build-service-account=projects/${GOOGLE_CLOUD_PROJECT}/serviceAccounts/ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --allow-unauthenticated --region asia-northeast1
 ```
 
-動作確認をしてみましょう。適当な文字列で検索を行った後、ブラウザを再読み込みしてみてください。
+デプロイが完了したら動作確認をしてみましょう。
+
+適当な文字列で検索を実行したあと、入力例の欄にに検索履歴が表示されていればOKです。
 
 **入力例** に検索履歴が表示されていることが確認できれば OK です。
 
@@ -412,7 +414,9 @@ sed -ie 's/preamble=\".*\"/preamble="小学生でも理解できる表現で説�
 gcloud run deploy --set-env-vars PROJECT_ID=${GOOGLE_CLOUD_PROJECT},LOCATION=global,ENGINE_ID=${ENGINE_ID},FIRESTORE_COLLECTION_NAME=vais-queries ai-agent-bootcamp-2025-service --source handson/ --service-account=ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --build-service-account=projects/${GOOGLE_CLOUD_PROJECT}/serviceAccounts/ai-agent-bootcamp-2025-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --allow-unauthenticated --region asia-northeast1
 ```
 
-デプロイが完了したら、システム指示が反映させているかを確認します。
+デプロイが完了したら動作確認をしてみましょう。
+
+適当な文字列で検索を実行し、表示される要約（概要）に、システム指示が反映されていればOKです。
 
 ## 他のシステム指示も試してみる
 
