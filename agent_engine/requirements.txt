@@ -1,0 +1,5 @@
+google-adk==0.1.0
+fire==0.7.0
+google-cloud-aiplatform[adk,agent_engines]==1.88.0
+google-cloud-discoveryengine == 0.13.8
+google-api-core == 2.24.0
