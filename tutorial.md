@@ -72,9 +72,32 @@ gcloud services enable \
 
 `Operation ... finished successfully.` と表示されたら成功です。
 
+## 検索エンジン作成に必要な権限の付与
+
+ログインしているメールアドレスをコピーして、`USER_ID` という環境変数に設定します。
+[コンソールの右上のアイコンをクリック](https://storage.googleapis.com/dev-genai-handson-25q2-static/images/user_name_1)するか、[ラボの開始画面](https://storage.googleapis.com/dev-genai-handson-25q2-static/images/user_name_2)から確認できます。
+
+
+```bash
+export USER_ID=<user id>
+```
+
+以下のコマンドで、ユーザー ID が出力されていれば成功です。
+```bash
+echo $USER_ID
+```
+
+上記を設定した後、以下のコマンドを実行して `Cloud Storage` にアクセスするための権限 (`roles/storage.objectUser`) を付与します。
+
+```bash
+gcloud projects add-iam-policy-binding ${GOOGLE_CLOUD_PROJECT} --member "user:${USER_ID}" --role=roles/storage.objectUser
+```
+
+これで、検索エンジン作成に必要な権限の付与は完了です。
+
 ## 事例 PDF データを設置する Cloud Storage バケットの作成
 
-事例 PDF データを設置するためのオブジェクト ストレージを作成しましょう。
+続いて、事例 PDF データを設置するためのオブジェクト ストレージを作成しましょう。
 
 `<walkthrough-project-id/>-search-handson` という名称の `Cloud Storage` バケットを、東京リージョン（`asia-northeast1`）に作成します。
 
@@ -129,32 +152,9 @@ gcloud storage ls gs://${GOOGLE_CLOUD_PROJECT}-search-handson/pdfs/*.pdf | wc -l
 
 検索エンジンを作成するには、**検索対象のデータの作成（ベクトル化）** を行い、ベクトル化したデータを**検索するための機能** を設定します。
 
-## 必要な権限の付与
-
-ログインしているメールアドレスをコピーして、`USER_ID` という環境変数に設定します。
-[コンソールの右上のアイコンをクリック](https://storage.googleapis.com/dev-genai-handson-25q2-static/images/user_name_1)するか、[ラボの開始画面](https://storage.googleapis.com/dev-genai-handson-25q2-static/images/user_name_2)から確認できます。
-
-
-```bash
-export USER_ID=<user id>
-```
-
-以下のコマンドで、ユーザー ID が出力されていれば成功です。
-```bash
-echo $USER_ID
-```
-
-上記を設定した後、以下のコマンドを実行して `Cloud Storage` にアクセスするための権限 (`roles/storage.objectUser`) を付与します。
-
-```bash
-gcloud projects add-iam-policy-binding ${GOOGLE_CLOUD_PROJECT} --member "user:${USER_ID}" --role=roles/storage.objectUser
-```
-
-これで、検索エンジン作成に必要な権限の付与は完了です。
-
 ## AI Applications を開く
 
-これから、検索エンジンの作成手順に入っていきます。
+検索エンジンの作成手順に入っていきます。
 
 上部の検索バーに `AI applications` と入力し、**AI applications** を選択して開きます。
 
@@ -181,7 +181,6 @@ gcloud projects add-iam-policy-binding ${GOOGLE_CLOUD_PROJECT} --member "user:${
 
 続いて、検索エンジンを作成していきます。
 本手順の画面キャプチャは、ラボのページに記載がありますのでそちらも参考にしてください。
-
 
 1. 画面左部メニューの **アプリ** を選択し、画面上部の **アプリを作成する** を選択します。
 2. アプリの種類で、**カスタム検索** の **作成** ボタンをクリックします。
@@ -347,26 +346,14 @@ sed -i 's/fn=set_dataset_default_examples/fn=update_dataset_examples/' handson/a
 ソースコードの変更がうまくできたかどうかは、以下のコマンドで確認可能です。
 
 ```bash
-git diff
+grep "fn=update_dataset_examples" handson/app.py
 ```
 
-以下のように、差分が表示されたら成功です。
-
+上記のコマンドを実行して以下の出力が表示されていたら、プログラムが正しく書き換えられています。
 ```diff
 # 出力例のため実行不要です
-diff --git a/handson/app.py b/handson/app.py
-index 538b8b5..af2a917 100644
---- a/handson/app.py
-+++ b/handson/app.py
-@@ -311,7 +311,7 @@ with gr.Blocks(css="style.css", title="AI Agent Bootcamp 検索アプリハン
-     demo.load(
-         # set_dataset_default_examples: default
-         # update_dataset_examples: get/set from firestoer
--        fn=set_dataset_default_examples,
-+        fn=update_dataset_examples,
-         inputs=None,
-         outputs=dataset_component 
-     )
+        fn=update_dataset_examples,
+        fn=update_dataset_examples,
 ```
 
 ## デプロイと動作確認
